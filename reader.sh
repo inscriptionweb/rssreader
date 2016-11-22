@@ -36,23 +36,30 @@ array=(
   "http://feeds.bbci.co.uk/news/world/rss.xml"
 )
 
+# Kill program if $1==stop
 if [ "$1" == "stop" ]; then
   killall -9 rsstail
 else
 
+# Kill all rsstail instances before continuing
 ./reader.sh stop
 clear
 
 # Start rsstail
 for url in "${array[@]}"
 do
+  # for each link in te list above, start an rsstail
+  #   send output to $feedfile
   rsstail -r -u $url >> $feedfile &
 done
 
 # Loop over $feedfile and output to console
 while true; do
+  # Read first line of $feedfile
   INPUT=$(head -n 1 $feedfile | sed 's/^Title: //')
+  # Set a randon wait time in no. of spins
   WAIT=$(( ( RANDOM % 10 )  + 1 ))
+  # For each random number of spins, spin the cursor
   for l in $(seq $WAIT); do
     echo -ne "\r\\"
     sleep 0.05
@@ -64,14 +71,20 @@ while true; do
     sleep 0.05
   done
 
-  # Keep spinning cursor till we got input
+  # If $feedfile is empty, or input is empty, just keep spinnin'
+  #   we don't enter the output phase
   if [ ! -z "$INPUT" ]; then
+  # go back in line and get ready for input
   echo -ne "\r";
 
+  # Read input line character by character
+  #   and output to console
   for (( i=0; i<${#INPUT}; i++ )); do
     echo -n "${INPUT:$i:1}"
+    # wait 0.025 between each character outputs
     sleep 0.025
   done
+  # Output empty line and delete first line in file (the one we just read)
   echo ""
   sed -i '1d' $feedfile
   fi
